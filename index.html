@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Amparar — Painel de Acompanhamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #050508;
+  --bg-card: rgba(14, 14, 28, 0.95);
+  --bg-card-hover: rgba(20, 20, 40, 0.98);
+  --black: #e8e8e6;
+  --white: #040406;
+  --copper: #d4944a;
+  --copper-dim: rgba(212, 148, 74, 0.15);
+  --copper-glow: rgba(212, 148, 74, 0.3);
+  --green: #2ecc71;
+  --green-dim: rgba(46, 204, 113, 0.12);
+  --yellow: #f39c12;
+  --yellow-dim: rgba(243, 156, 18, 0.12);
+  --gray: rgba(232, 232, 230, 0.35);
+  --gray-dim: rgba(232, 232, 230, 0.06);
+  --border: rgba(232, 232, 230, 0.08);
+  --border-hover: rgba(232, 232, 230, 0.16);
+  --font-hero: 'Bebas Neue', cursive;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+  --marco-color: #2ecc71;
+  --marco-bg: rgba(46, 204, 113, 0.1);
+  --aguardando-color: rgba(232, 232, 230, 0.5);
+  --aguardando-bg: rgba(232, 232, 230, 0.05);
+  --adefinir-color: rgba(232, 232, 230, 0.35);
+  --adefinir-bg: rgba(232, 232, 230, 0.04);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--black);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.35;
+}
+
+/* Atmospheric depth */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 15%, rgba(15,20,60,0.3) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(5,8,30,0.25) 0%, transparent 60%);
+}
+
+/* ═══ LOADING ═══ */
+#loading-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 10000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#loading-screen.hidden { opacity: 0; visibility: hidden; }
+.loading-spinner {
+  width: 40px; height: 40px;
+  border: 2px solid var(--border);
+  border-top-color: var(--copper);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+/* ═══ ERROR ═══ */
+#error-screen {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 10001;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; padding: 40px;
+  text-align: center;
+}
+#error-screen.visible { display: flex; }
+.error-icon { font-size: 2rem; opacity: 0.5; }
+.error-title {
+  font-family: var(--font-hero);
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  color: var(--copper);
+}
+.error-msg {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--gray);
+  max-width: 500px;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+}
+
+/* ═══ HEADER ═══ */
+.site-header {
+  position: sticky; top: 0; z-index: 200;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-logo {
+  font-family: var(--font-hero);
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  color: var(--black);
+  display: flex; align-items: center; gap: 10px;
+}
+.header-logo-icon {
+  width: 28px; height: 28px;
+  background: var(--copper);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-hero);
+  font-size: 0.9rem;
+  color: #050508;
+  font-weight: 700;
+}
+.header-meta {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+  display: flex; align-items: center; gap: 20px;
+}
+.header-meta-dot {
+  width: 6px; height: 6px;
+  background: var(--copper);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ═══ MAIN CONTENT ═══ */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 48px 80px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.main-content.visible { opacity: 1; transform: translateY(0); }
+
+/* ═══ PROJECT HERO ═══ */
+.project-hero {
+  margin-bottom: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.project-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 12px;
+}
+.project-title {
+  font-family: var(--font-hero);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.project-desc {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: rgba(232, 232, 230, 0.55);
+  max-width: 700px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* ═══ STATS GRID ═══ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.stat-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+.stat-value {
+  font-family: var(--font-hero);
+  font-size: 2.2rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-value.copper { color: var(--copper); }
+.stat-value.green { color: var(--green); }
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+/* ═══ PROGRESS BAR ═══ */
+.progress-section { margin-bottom: 48px; }
+.progress-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.progress-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.progress-pct {
+  font-family: var(--font-hero);
+  font-size: 1.4rem;
+  color: var(--copper);
+}
+.progress-track {
+  height: 6px;
+  background: var(--gray-dim);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--copper), #e8c87a);
+  border-radius: 3px;
+  transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute; right: 0; top: -2px;
+  width: 10px; height: 10px;
+  background: var(--copper);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--copper-glow);
+}
+
+/* ═══ SECTION TITLES ═══ */
+.section-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+}
+.section-line {
+  width: 32px; height: 2px;
+  background: var(--copper);
+}
+.section-title {
+  font-family: var(--font-hero);
+  font-size: 1.6rem;
+  letter-spacing: 0.06em;
+}
+.section-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-left: auto;
+}
+
+/* ═══ FILTER TABS ═══ */
+.filter-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.filter-btn {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gray);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.filter-btn:hover { border-color: var(--border-hover); color: var(--black); }
+.filter-btn.active {
+  background: var(--copper-dim);
+  border-color: var(--copper);
+  color: var(--copper);
+}
+
+/* ═══ TIMELINE / CRONOGRAMA ═══ */
+.timeline-container {
+  margin-bottom: 64px;
+  position: relative;
+}
+.timeline-scroll {
+  overflow-x: auto;
+  padding-bottom: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--copper) var(--gray-dim);
+}
+.timeline-scroll::-webkit-scrollbar { height: 4px; }
+.timeline-scroll::-webkit-scrollbar-track { background: var(--gray-dim); border-radius: 2px; }
+.timeline-scroll::-webkit-scrollbar-thumb { background: var(--copper); border-radius: 2px; }
+
+.timeline-track {
+  display: flex;
+  gap: 0;
+  min-width: max-content;
+  position: relative;
+  padding: 40px 0 20px;
+}
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 54px; left: 20px; right: 20px;
+  height: 2px;
+  background: var(--border);
+}
+
+.sprint-block {
+  min-width: 180px;
+  flex: 1;
+  position: relative;
+  padding: 0 8px;
+}
+.sprint-marker {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  position: relative;
+  z-index: 2;
+  margin: 0 auto 16px;
+  transition: all 0.3s ease;
+}
+.sprint-marker.has-dates {
+  border-color: var(--copper);
+  background: var(--copper-dim);
+}
+.sprint-marker.has-dates::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--copper-glow);
+}
+.sprint-marker.is-marco {
+  width: 20px; height: 20px;
+  border-color: var(--marco-color);
+  background: var(--marco-bg);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.3);
+}
+
+.sprint-label {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+.sprint-name {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+.sprint-dates {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--copper);
+  letter-spacing: 0.05em;
+}
+.sprint-dates.undefined {
+  color: var(--adefinir-color);
+  font-style: italic;
+}
+.sprint-count {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--gray);
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+/* ═══ SPRINT CARDS ═══ */
+.sprints-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-bottom: 64px;
+}
+.sprint-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
+}
+.sprint-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.sprint-section:hover { border-color: var(--border-hover); }
+
+.sprint-header {
+  padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.3s ease;
+}
+.sprint-header:hover { background: rgba(212, 148, 74, 0.03); }
+
+.sprint-header-left {
+  display: flex; align-items: center; gap: 16px;
+}
+.sprint-number {
+  font-family: var(--font-hero);
+  font-size: 1.8rem;
+  color: var(--copper);
+  line-height: 1;
+  min-width: 48px;
+}
+.sprint-info h3 {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.sprint-info .sprint-period {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.sprint-header-right {
+  display: flex; align-items: center; gap: 16px;
+}
+.sprint-task-count {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--gray);
+}
+.sprint-toggle {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+}
+.sprint-toggle:hover { border-color: var(--copper); color: var(--copper); }
+.sprint-section.expanded .sprint-toggle { transform: rotate(180deg); }
+
+.sprint-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sprint-section.expanded .sprint-body {
+  max-height: 2000px;
+}
+
+.task-list { padding: 8px 0; }
+
+.task-item {
+  padding: 16px 28px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item:hover { background: rgba(212, 148, 74, 0.02); }
+
+.task-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+.task-icon.marco {
+  background: var(--marco-bg);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: var(--marco-color);
+}
+.task-icon.aguardando {
+  background: var(--aguardando-bg);
+  border: 1px solid rgba(232, 232, 230, 0.1);
+  color: var(--aguardando-color);
+}
+.task-icon.adefinir {
+  background: var(--adefinir-bg);
+  border: 1px solid rgba(232, 232, 230, 0.06);
+  color: var(--adefinir-color);
+}
+
+.task-content { min-width: 0; }
+.task-name {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+  display: flex; align-items: center; gap: 8px;
+}
+.task-name.is-marco {
+  color: var(--marco-color);
+  font-size: 1rem;
+}
+.task-desc {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: rgba(232, 232, 230, 0.4);
+  font-weight: 300;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-tags {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.tag-marco {
+  background: var(--marco-bg);
+  color: var(--marco-color);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+.tag-aguardando {
+  background: var(--aguardando-bg);
+  color: var(--aguardando-color);
+  border: 1px solid rgba(232, 232, 230, 0.08);
+}
+.tag-adefinir {
+  background: var(--adefinir-bg);
+  color: var(--adefinir-color);
+  border: 1px solid rgba(232, 232, 230, 0.06);
+}
+
+.task-date {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  color: var(--copper);
+  white-space: nowrap;
+  text-align: right;
+}
+.task-date.undefined {
+  color: var(--adefinir-color);
+  font-style: italic;
+}
+
+/* ═══ MILESTONES ═══ */
+.milestones-section { margin-bottom: 64px; }
+
+.milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.milestone-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(46, 204, 113, 0.12);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.milestone-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--marco-color);
+  opacity: 0.6;
+}
+.milestone-card:hover {
+  border-color: rgba(46, 204, 113, 0.25);
+  transform: translateY(-2px);
+}
+.milestone-number {
+  font-family: var(--font-hero);
+  font-size: 2rem;
+  color: var(--marco-color);
+  opacity: 0.3;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.milestone-title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.milestone-desc {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: rgba(232, 232, 230, 0.4);
+  font-weight: 300;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.milestone-date {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-top: 12px;
+}
+.milestone-date.undefined { color: var(--adefinir-color); }
+.milestone-sprint-tag {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-top: 6px;
+}
+
+/* ═══ LEGEND ═══ */
+.legend {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  padding: 20px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 48px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+}
+.legend-dot.marco { background: var(--marco-color); }
+.legend-dot.aguardando { background: var(--aguardando-color); }
+.legend-dot.adefinir { background: var(--adefinir-color); }
+.legend-dot.copper { background: var(--copper); }
+
+/* ═══ FOOTER ═══ */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-brand {
+  font-family: var(--font-hero);
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  color: var(--gray);
+}
+.footer-credit {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.footer-credit a {
+  color: var(--copper);
+  text-decoration: none;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 900px) {
+  .site-header { padding: 12px 20px; }
+  .main-content { padding: 24px 20px 60px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 18px; }
+  .stat-value { font-size: 1.8rem; }
+  .task-item { grid-template-columns: 28px 1fr auto; gap: 10px; }
+  .task-tags { display: none; }
+  .milestones-grid { grid-template-columns: 1fr; }
+  .site-footer { padding: 20px; flex-direction: column; gap: 8px; }
+  .sprint-header { padding: 18px 20px; }
+  .task-item { padding: 14px 20px; }
+  .legend { padding: 16px 20px; gap: 16px; }
+}
+@media (max-width: 600px) {
+  .project-title { font-size: 2rem; }
+  .header-meta { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .sprint-number { font-size: 1.4rem; }
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.animate-in.visible {
+  animation: fadeInUp 0.6s ease forwards;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-screen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Carregando projeto...</div>
+</div>
+
+<!-- Error -->
+<div id="error-screen">
+  <div class="error-icon">⚠</div>
+  <div class="error-title">ERRO AO CARREGAR</div>
+  <div class="error-msg" id="error-msg">Não foi possível carregar os dados do projeto.</div>
+</div>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-logo">
+    <div class="header-logo-icon">B</div>
+    BEYOND BITS
+  </div>
+  <div class="header-meta">
+    <span>PAINEL DO CLIENTE</span>
+    <div class="header-meta-dot"></div>
+    <span id="header-date"></span>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="main-content" id="main-content">
+  <!-- Hero -->
+  <section class="project-hero">
+    <div class="project-eyebrow">Acompanhamento de projeto</div>
+    <h1 class="project-title" id="project-title"></h1>
+    <p class="project-desc" id="project-desc"></p>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <!-- Progress -->
+  <section class="progress-section">
+    <div class="progress-header">
+      <span class="progress-label">Progresso geral do projeto</span>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+  </section>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot marco"></div> Marco</div>
+    <div class="legend-item"><div class="legend-dot aguardando"></div> Aguardando</div>
+    <div class="legend-item"><div class="legend-dot adefinir"></div> A definir</div>
+    <div class="legend-item"><div class="legend-dot copper"></div> Data prevista</div>
+  </div>
+
+  <!-- Timeline -->
+  <section class="timeline-container animate-in">
+    <div class="section-header">
+      <div class="section-line"></div>
+      <h2 class="section-title">CRONOGRAMA</h2>
+      <span class="section-subtitle">Visão geral das entregas</span>
+    </div>
+    <div class="timeline-scroll">
+      <div class="timeline-track" id="timeline-track"></div>
+    </div>
+  </section>
+
+  <!-- Milestones -->
+  <section class="milestones-section animate-in">
+    <div class="section-header">
+      <div class="section-line"></div>
+      <h2 class="section-title">MARCOS DO PROJETO</h2>
+      <span class="section-subtitle" id="milestone-count"></span>
+    </div>
+    <div class="milestones-grid" id="milestones-grid"></div>
+  </section>
+
+  <!-- Sprints Detail -->
+  <section class="animate-in">
+    <div class="section-header">
+      <div class="section-line"></div>
+      <h2 class="section-title">DETALHAMENTO POR SPRINT</h2>
+      <span class="section-subtitle" id="total-tasks"></span>
+    </div>
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="sprints-grid" id="sprints-grid"></div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-brand">BEYOND BITS</div>
+  <div class="footer-credit">Desenvolvido por <a href="https://beyond.dev.br" target="_blank">beyond.dev.br</a></div>
+</footer>
+
+<script>
+// ════════════════════════════════════════════
+// CONFIG — Altere a URL do JSON aqui
+// ════════════════════════════════════════════
+const JSON_URL = './1nxAPbw5_-_crm-amparar-cliente.json';
+// Para carregar direto do repositório, troque por:
+// const JSON_URL = 'https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/trello-board.json';
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function formatDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function formatDateShort(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+function getCardLabel(card) {
+  if (!card.labels || !card.labels.length) return null;
+  for (const l of card.labels) {
+    if (l.name === 'MARCO') return 'marco';
+    if (l.name === 'AGUARDANDO') return 'aguardando';
+    if (l.name === 'A DEFINIR') return 'adefinir';
+  }
+  return null;
+}
+function isMarco(card) {
+  return card.labels && card.labels.some(l => l.name === 'MARCO');
+}
+function stripMarkdown(str) {
+  if (!str) return '';
+  return str.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[#_~`]/g, '');
+}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+async function init() {
+  const loadingEl = document.getElementById('loading-screen');
+  const errorEl = document.getElementById('error-screen');
+  const errorMsg = document.getElementById('error-msg');
+
+  try {
+    const resp = await fetch(JSON_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    const data = await resp.json();
+    renderBoard(data);
+    loadingEl.classList.add('hidden');
+    setTimeout(() => {
+      document.getElementById('main-content').classList.add('visible');
+      initScrollObserver();
+    }, 100);
+  } catch (err) {
+    loadingEl.classList.add('hidden');
+    errorMsg.textContent = `Não foi possível carregar o JSON do projeto.\n\n${err.message}\n\nVerifique se o arquivo "${JSON_URL}" está acessível.`;
+    errorEl.classList.add('visible');
+    console.error(err);
+  }
+}
+
+function renderBoard(data) {
+  // Date header
+  document.getElementById('header-date').textContent =
+    new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+
+  // Project info
+  const boardName = data.name || 'Projeto';
+  document.getElementById('project-title').textContent = boardName;
+  document.getElementById('project-desc').textContent =
+    'Acompanhe em tempo real o progresso de cada etapa do seu projeto. Cada sprint representa um ciclo de duas semanas de desenvolvimento, com marcos que marcam entregas importantes.';
+
+  // Build lists map
+  const listsMap = {};
+  const listsOrder = [];
+  (data.lists || []).forEach(l => {
+    listsMap[l.id] = l;
+    listsOrder.push(l);
+  });
+
+  // Group cards by list
+  const cardsByList = {};
+  (data.cards || []).forEach(c => {
+    if (!cardsByList[c.idList]) cardsByList[c.idList] = [];
+    cardsByList[c.idList].push(c);
+  });
+
+  // Sort cards by due date within each list
+  for (const listId in cardsByList) {
+    cardsByList[listId].sort((a, b) => {
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return new Date(a.due) - new Date(b.due);
+    });
+  }
+
+  // Stats
+  const allCards = data.cards || [];
+  const totalTasks = allCards.filter(c => !isMarco(c) && c.name !== 'Doc RoadMap').length;
+  const marcos = allCards.filter(c => isMarco(c));
+  const withDates = allCards.filter(c => c.due);
+  const noDates = allCards.filter(c => !c.due && !isMarco(c) && c.name !== 'Doc RoadMap');
+  const sprintLists = listsOrder.filter(l => l.name.startsWith('Sprint'));
+  const totalSprints = sprintLists.length;
+
+  // Determine current date position for progress
+  const now = new Date();
+  const datedCards = allCards.filter(c => c.due).sort((a, b) => new Date(a.due) - new Date(b.due));
+  let completedCount = 0;
+  if (datedCards.length > 0) {
+    completedCount = datedCards.filter(c => new Date(c.due) < now).length;
+  }
+  const progressPct = totalTasks > 0 ? Math.round((completedCount / allCards.filter(c => c.name !== 'Doc RoadMap').length) * 100) : 0;
+
+  // Render stats
+  const statsGrid = document.getElementById('stats-grid');
+  const stats = [
+    { value: totalSprints, label: 'Sprints', cls: 'copper' },
+    { value: totalTasks, label: 'Tarefas', cls: '' },
+    { value: marcos.length, label: 'Marcos', cls: 'green' },
+    { value: withDates.length, label: 'Com data', cls: 'copper' },
+    { value: noDates.length, label: 'A definir', cls: '' },
+  ];
+  statsGrid.innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-value ${s.cls}">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>
+  `).join('');
+
+  // Progress bar
+  document.getElementById('progress-pct').textContent = progressPct + '%';
+  setTimeout(() => {
+    document.getElementById('progress-fill').style.width = progressPct + '%';
+  }, 600);
+
+  // Timeline
+  const timelineTrack = document.getElementById('timeline-track');
+  timelineTrack.innerHTML = '';
+  sprintLists.forEach((list, i) => {
+    const cards = cardsByList[list.id] || [];
+    const hasDates = cards.some(c => c.due);
+    const hasMarco = cards.some(c => isMarco(c));
+    const dates = cards.filter(c => c.due).map(c => new Date(c.due));
+    let dateRange = '';
+    let isUndefined = false;
+    if (dates.length > 0) {
+      const minD = new Date(Math.min(...dates));
+      const maxD = new Date(Math.max(...dates));
+      dateRange = `${formatDateShort(minD)} — ${formatDateShort(maxD)}`;
+    } else {
+      dateRange = 'A DEFINIR';
+      isUndefined = true;
+    }
+
+    const sprintNum = i + 1;
+    const block = document.createElement('div');
+    block.className = 'sprint-block';
+    block.innerHTML = `
+      <div class="sprint-marker ${hasDates ? 'has-dates' : ''} ${hasMarco ? 'is-marco' : ''}"></div>
+      <div class="sprint-label">Sprint ${String(sprintNum).padStart(2, '0')}</div>
+      <div class="sprint-name">${list.name.replace(/Sprint \d+ - /, '')}</div>
+      <div class="sprint-dates ${isUndefined ? 'undefined' : ''}">${dateRange}</div>
+      <div class="sprint-count">${cards.length} itens</div>
+    `;
+    timelineTrack.appendChild(block);
+  });
+
+  // Milestones
+  const milestonesGrid = document.getElementById('milestones-grid');
+  document.getElementById('milestone-count').textContent = `${marcos.length} marcos`;
+  milestonesGrid.innerHTML = marcos.map((c, i) => {
+    const listName = listsMap[c.idList] ? listsMap[c.idList].name : '';
+    const desc = stripMarkdown(c.desc);
+    const dateStr = c.due ? formatDate(c.due) : 'A definir';
+    return `
+      <div class="milestone-card">
+        <div class="milestone-number">${String(i + 1).padStart(2, '0')}</div>
+        <div class="milestone-title">${c.name || 'Marco ' + (i+1)}</div>
+        <div class="milestone-desc">${desc}</div>
+        <div class="milestone-date ${c.due ? '' : 'undefined'}">${dateStr}</div>
+        <div class="milestone-sprint-tag">${listName}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Filter bar
+  const filterBar = document.getElementById('filter-bar');
+  filterBar.innerHTML = `
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="marco">Marcos</button>
+    <button class="filter-btn" data-filter="aguardando">Aguardando</button>
+    <button class="filter-btn" data-filter="adefinir">A definir</button>
+  `;
+  filterBar.addEventListener('click', e => {
+    if (!e.target.classList.contains('filter-btn')) return;
+    filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    filterSprints(e.target.dataset.filter);
+  });
+
+  // Sprint cards
+  const sprintsGrid = document.getElementById('sprints-grid');
+  document.getElementById('total-tasks').textContent = `${allCards.filter(c => c.name !== 'Doc RoadMap').length} itens total`;
+
+  sprintLists.forEach((list, i) => {
+    const cards = cardsByList[list.id] || [];
+    if (cards.length === 0) return;
+    const sprintNum = i + 1;
+    const section = document.createElement('div');
+    section.className = 'sprint-section';
+    section.dataset.sprint = sprintNum;
+
+    const dates = cards.filter(c => c.due).map(c => new Date(c.due));
+    let period = 'Datas a definir';
+    if (dates.length > 0) {
+      const minD = formatDate(new Date(Math.min(...dates)));
+      const maxD = formatDate(new Date(Math.max(...dates)));
+      period = `${minD} — ${maxD}`;
+    }
+
+    section.innerHTML = `
+      <div class="sprint-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <div class="sprint-header-left">
+          <div class="sprint-number">${String(sprintNum).padStart(2, '0')}</div>
+          <div class="sprint-info">
+            <h3>${list.name}</h3>
+            <div class="sprint-period">${period}</div>
+          </div>
+        </div>
+        <div class="sprint-header-right">
+          <div class="sprint-task-count">${cards.length} itens</div>
+          <div class="sprint-toggle">▼</div>
+        </div>
+      </div>
+      <div class="sprint-body">
+        <div class="task-list">
+          ${cards.map(card => renderTaskItem(card)).join('')}
+        </div>
+      </div>
+    `;
+    sprintsGrid.appendChild(section);
+  });
+
+  // Auto-expand first sprint with upcoming dates
+  const firstSprint = sprintsGrid.querySelector('.sprint-section');
+  if (firstSprint) firstSprint.classList.add('expanded');
+}
+
+function renderTaskItem(card) {
+  const label = getCardLabel(card);
+  const isMarcCard = isMarco(card);
+  const iconClass = label || 'aguardando';
+  const iconSymbol = isMarcCard ? '◆' : '○';
+  const nameClass = isMarcCard ? 'is-marco' : '';
+  const desc = stripMarkdown(card.desc);
+  const dateStr = card.due ? formatDate(card.due) : 'A definir';
+  const dateClass = card.due ? '' : 'undefined';
+
+  // Tags
+  const tags = (card.labels || []).filter(l => l.name).map(l => {
+    const cls = l.name === 'MARCO' ? 'tag-marco' : l.name === 'AGUARDANDO' ? 'tag-aguardando' : 'tag-adefinir';
+    return `<span class="tag ${cls}">${l.name}</span>`;
+  }).join('');
+
+  return `
+    <div class="task-item" data-label="${label || 'none'}">
+      <div class="task-icon ${iconClass}">${iconSymbol}</div>
+      <div class="task-content">
+        <div class="task-name ${nameClass}">${card.name}</div>
+        ${desc ? `<div class="task-desc">${desc}</div>` : ''}
+      </div>
+      <div class="task-tags">${tags}</div>
+      <div class="task-date ${dateClass}">${dateStr}</div>
+    </div>
+  `;
+}
+
+function filterSprints(filter) {
+  document.querySelectorAll('.task-item').forEach(item => {
+    if (filter === 'all') {
+      item.style.display = '';
+    } else {
+      item.style.display = item.dataset.label === filter ? '' : 'none';
+    }
+  });
+}
+
+function initScrollObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.animate-in, .sprint-section').forEach(el => observer.observe(el));
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
