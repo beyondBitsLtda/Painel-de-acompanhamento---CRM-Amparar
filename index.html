@@ -767,6 +767,345 @@ body::after {
   .sprint-number { font-size: 1.4rem; }
 }
 
+/* ═══ GANTT CHART ═══ */
+.gantt-section { margin-bottom: 64px; }
+
+.gantt-controls {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.gantt-btn {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gray);
+  padding: 7px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.gantt-btn:hover { border-color: var(--border-hover); color: var(--black); }
+.gantt-btn.active {
+  background: var(--copper-dim);
+  border-color: var(--copper);
+  color: var(--copper);
+}
+
+.gantt-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.gantt-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: thin;
+  scrollbar-color: var(--copper) var(--gray-dim);
+}
+.gantt-scroll::-webkit-scrollbar { height: 5px; }
+.gantt-scroll::-webkit-scrollbar-track { background: var(--gray-dim); }
+.gantt-scroll::-webkit-scrollbar-thumb { background: var(--copper); border-radius: 3px; }
+
+.gantt-chart {
+  display: grid;
+  min-width: max-content;
+  position: relative;
+}
+
+/* Header row with month/week columns */
+.gantt-header {
+  display: contents;
+}
+.gantt-header-months {
+  display: flex;
+  position: sticky; top: 0; z-index: 5;
+  background: rgba(8, 8, 18, 0.98);
+  border-bottom: 1px solid var(--border);
+}
+.gantt-month-cell {
+  font-family: var(--font-hero);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--copper);
+  padding: 14px 0 4px 12px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.gantt-header-weeks {
+  display: flex;
+  position: sticky; top: 38px; z-index: 5;
+  background: rgba(8, 8, 18, 0.98);
+  border-bottom: 2px solid var(--border);
+}
+.gantt-week-cell {
+  font-family: var(--font-mono);
+  font-size: 0.45rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray);
+  text-align: center;
+  padding: 4px 0 10px;
+  border-right: 1px solid var(--gray-dim);
+}
+.gantt-week-cell.is-today {
+  color: var(--copper);
+  background: var(--copper-dim);
+}
+
+/* Sidebar labels */
+.gantt-sidebar {
+  position: sticky; left: 0; z-index: 4;
+  background: rgba(8, 8, 18, 0.98);
+  border-right: 2px solid var(--border);
+  min-width: 220px;
+  max-width: 220px;
+}
+.gantt-sidebar-header {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+  padding: 14px 16px;
+  border-bottom: 2px solid var(--border);
+  height: 76px;
+  display: flex; align-items: flex-end;
+}
+
+.gantt-row-group {
+  display: flex;
+  min-height: 1px;
+}
+.gantt-row-sidebar {
+  position: sticky; left: 0; z-index: 3;
+  background: rgba(8, 8, 18, 0.98);
+  border-right: 2px solid var(--border);
+  min-width: 220px;
+  max-width: 220px;
+  padding: 0 12px;
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--gray-dim);
+  transition: background 0.2s ease;
+}
+.gantt-row-group:hover .gantt-row-sidebar {
+  background: rgba(14, 14, 36, 0.98);
+}
+.gantt-row-group:hover .gantt-row-bars {
+  background: rgba(212, 148, 74, 0.015);
+}
+
+.gantt-row-label {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 196px;
+  line-height: 1.2;
+}
+.gantt-row-label.is-marco {
+  color: var(--marco-color);
+  font-weight: 700;
+}
+.gantt-row-label.is-sprint-header {
+  font-family: var(--font-hero);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--copper);
+}
+
+/* Bar area */
+.gantt-row-bars {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 36px;
+  border-bottom: 1px solid var(--gray-dim);
+  transition: background 0.2s ease;
+}
+.gantt-row-bars.sprint-row {
+  height: 32px;
+  background: rgba(212, 148, 74, 0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.gantt-bar {
+  position: absolute;
+  height: 18px;
+  border-radius: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 6px;
+  transition: all 0.3s ease;
+  cursor: default;
+  z-index: 2;
+}
+.gantt-bar:hover {
+  filter: brightness(1.3);
+  transform: translateY(-50%) scaleY(1.3);
+  z-index: 10;
+}
+.gantt-bar.bar-task {
+  background: linear-gradient(90deg, var(--copper), rgba(212, 148, 74, 0.7));
+  box-shadow: 0 0 8px rgba(212, 148, 74, 0.2);
+}
+.gantt-bar.bar-marco {
+  background: linear-gradient(90deg, var(--marco-color), rgba(46, 204, 113, 0.7));
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
+  height: 20px;
+  border-radius: 4px;
+}
+.gantt-bar.bar-sprint {
+  background: linear-gradient(90deg, rgba(212, 148, 74, 0.25), rgba(212, 148, 74, 0.08));
+  border: 1px solid rgba(212, 148, 74, 0.2);
+  height: 22px;
+  border-radius: 6px;
+}
+.gantt-bar.bar-undefined {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(232, 232, 230, 0.04),
+    rgba(232, 232, 230, 0.04) 4px,
+    rgba(232, 232, 230, 0.08) 4px,
+    rgba(232, 232, 230, 0.08) 8px
+  );
+  border: 1px dashed rgba(232, 232, 230, 0.12);
+  height: 14px;
+}
+
+/* Today line */
+.gantt-today-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper);
+  z-index: 6;
+  pointer-events: none;
+}
+.gantt-today-line::before {
+  content: 'HOJE';
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  letter-spacing: 0.15em;
+  color: var(--copper);
+  white-space: nowrap;
+  background: rgba(8, 8, 18, 0.95);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--copper);
+}
+.gantt-today-line::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -4px;
+  width: 10px;
+  background: linear-gradient(90deg, transparent, rgba(212,148,74,0.08), transparent);
+  pointer-events: none;
+}
+
+/* Gantt tooltip */
+.gantt-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: rgba(10, 10, 24, 0.97);
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  padding: 12px 16px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: 280px;
+  backdrop-filter: blur(12px);
+}
+.gantt-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.gantt-tooltip-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+.gantt-tooltip-date {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--copper);
+}
+.gantt-tooltip-desc {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-top: 6px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gantt-tooltip-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-top: 6px;
+}
+
+/* Gantt legend inline */
+.gantt-legend {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(8, 8, 18, 0.5);
+}
+.gantt-legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.gantt-legend-bar {
+  width: 24px; height: 8px;
+  border-radius: 3px;
+}
+.gantt-legend-bar.bar-task { background: linear-gradient(90deg, var(--copper), rgba(212,148,74,0.7)); }
+.gantt-legend-bar.bar-marco { background: linear-gradient(90deg, var(--marco-color), rgba(46,204,113,0.7)); }
+.gantt-legend-bar.bar-sprint { background: rgba(212,148,74,0.2); border: 1px solid rgba(212,148,74,0.3); }
+.gantt-legend-bar.bar-undefined {
+  background: repeating-linear-gradient(-45deg, rgba(232,232,230,0.06), rgba(232,232,230,0.06) 3px, rgba(232,232,230,0.12) 3px, rgba(232,232,230,0.12) 6px);
+  border: 1px dashed rgba(232,232,230,0.15);
+}
+.gantt-legend-bar.bar-today {
+  width: 2px; height: 14px;
+  background: var(--copper);
+  border-radius: 1px;
+}
+
+@media (max-width: 900px) {
+  .gantt-row-sidebar, .gantt-sidebar { min-width: 160px; max-width: 160px; }
+  .gantt-row-label { max-width: 140px; font-size: 0.7rem; }
+}
+
 /* ═══ ANIMATIONS ═══ */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
@@ -851,6 +1190,40 @@ body::after {
       <div class="timeline-track" id="timeline-track"></div>
     </div>
   </section>
+
+  <!-- Gantt Chart -->
+  <section class="gantt-section animate-in">
+    <div class="section-header">
+      <div class="section-line"></div>
+      <h2 class="section-title">GRÁFICO DE GANTT</h2>
+      <span class="section-subtitle">Cronograma em barras</span>
+    </div>
+    <div class="gantt-controls" id="gantt-controls">
+      <button class="gantt-btn active" data-view="tasks">Todas as tarefas</button>
+      <button class="gantt-btn" data-view="sprints">Sprints agrupados</button>
+      <button class="gantt-btn" data-view="marcos">Somente marcos</button>
+    </div>
+    <div class="gantt-wrapper">
+      <div class="gantt-scroll" id="gantt-scroll">
+        <div id="gantt-chart"></div>
+      </div>
+      <div class="gantt-legend">
+        <div class="gantt-legend-item"><div class="gantt-legend-bar bar-task"></div> Tarefa</div>
+        <div class="gantt-legend-item"><div class="gantt-legend-bar bar-marco"></div> Marco</div>
+        <div class="gantt-legend-item"><div class="gantt-legend-bar bar-sprint"></div> Sprint</div>
+        <div class="gantt-legend-item"><div class="gantt-legend-bar bar-undefined"></div> A definir</div>
+        <div class="gantt-legend-item"><div class="gantt-legend-bar bar-today"></div> Hoje</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tooltip -->
+  <div class="gantt-tooltip" id="gantt-tooltip">
+    <div class="gantt-tooltip-title" id="tt-title"></div>
+    <div class="gantt-tooltip-date" id="tt-date"></div>
+    <div class="gantt-tooltip-desc" id="tt-desc"></div>
+    <div class="gantt-tooltip-tag" id="tt-tag"></div>
+  </div>
 
   <!-- Milestones -->
   <section class="milestones-section animate-in">
@@ -1131,6 +1504,333 @@ function renderBoard(data) {
   // Auto-expand first sprint with upcoming dates
   const firstSprint = sprintsGrid.querySelector('.sprint-section');
   if (firstSprint) firstSprint.classList.add('expanded');
+
+  // ════════════════════════════════════════════
+  // GANTT CHART
+  // ════════════════════════════════════════════
+  renderGantt(sprintLists, cardsByList, listsMap, 'tasks');
+
+  // Gantt view toggle
+  const ganttControls = document.getElementById('gantt-controls');
+  ganttControls.addEventListener('click', e => {
+    if (!e.target.classList.contains('gantt-btn')) return;
+    ganttControls.querySelectorAll('.gantt-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    renderGantt(sprintLists, cardsByList, listsMap, e.target.dataset.view);
+  });
+}
+
+// ════════════════════════════════════════════
+// GANTT RENDERER
+// ════════════════════════════════════════════
+function renderGantt(sprintLists, cardsByList, listsMap, viewMode) {
+  const container = document.getElementById('gantt-chart');
+  container.innerHTML = '';
+
+  const DAY_WIDTH = 38;
+  const ROW_HEIGHT = 36;
+  const SPRINT_ROW_HEIGHT = 32;
+  const HEADER_HEIGHT = 76;
+
+  // Collect all dates to determine range
+  const allDates = [];
+  sprintLists.forEach(list => {
+    (cardsByList[list.id] || []).forEach(c => {
+      if (c.due) allDates.push(new Date(c.due));
+    });
+  });
+
+  if (allDates.length === 0) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray);font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;">Nenhuma data definida ainda</div>';
+    return;
+  }
+
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+
+  // Expand range: 1 week before, 3 weeks after (room for "a definir")
+  const rangeStart = new Date(minDate);
+  rangeStart.setDate(rangeStart.getDate() - 7);
+  rangeStart.setDate(rangeStart.getDate() - rangeStart.getDay()); // align to Sunday
+
+  const rangeEnd = new Date(maxDate);
+  rangeEnd.setDate(rangeEnd.getDate() + 21 + 7 * 8); // extra for "a definir" sprints
+  rangeEnd.setDate(rangeEnd.getDate() + (6 - rangeEnd.getDay())); // align to Saturday
+
+  const totalDays = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24)) + 1;
+  const chartWidth = totalDays * DAY_WIDTH + 220; // +sidebar
+
+  function dayOffset(date) {
+    return Math.floor((date - rangeStart) / (1000 * 60 * 60 * 24));
+  }
+
+  // Build rows based on view
+  const rows = [];
+  let nextUndefStart = new Date(maxDate);
+  nextUndefStart.setDate(nextUndefStart.getDate() + 7);
+
+  sprintLists.forEach((list, si) => {
+    const cards = cardsByList[list.id] || [];
+    const sprintDates = cards.filter(c => c.due).map(c => new Date(c.due));
+    let sprintStart, sprintEnd;
+    const hasDates = sprintDates.length > 0;
+
+    if (hasDates) {
+      sprintStart = new Date(Math.min(...sprintDates));
+      sprintEnd = new Date(Math.max(...sprintDates));
+    } else {
+      // Place "a definir" sprints sequentially after last known date
+      sprintStart = new Date(nextUndefStart);
+      sprintEnd = new Date(nextUndefStart);
+      sprintEnd.setDate(sprintEnd.getDate() + 13); // 2 weeks
+      nextUndefStart = new Date(sprintEnd);
+      nextUndefStart.setDate(nextUndefStart.getDate() + 1);
+    }
+
+    if (viewMode === 'sprints' || viewMode === 'tasks') {
+      rows.push({
+        type: 'sprint',
+        label: list.name,
+        start: sprintStart,
+        end: sprintEnd,
+        hasDates,
+        cards: cards,
+        listName: list.name,
+      });
+    }
+
+    if (viewMode === 'tasks') {
+      cards.forEach(card => {
+        if (card.name === 'Doc RoadMap') return;
+        const isMrc = isMarco(card);
+        rows.push({
+          type: isMrc ? 'marco' : 'task',
+          label: card.name,
+          start: card.due ? new Date(card.due) : null,
+          end: card.due ? new Date(card.due) : null,
+          hasDates: !!card.due,
+          card,
+          listName: list.name,
+          sprintStart,
+          sprintEnd,
+        });
+      });
+    }
+
+    if (viewMode === 'marcos') {
+      cards.filter(c => isMarco(c)).forEach(card => {
+        rows.push({
+          type: 'marco',
+          label: card.name + ' — ' + list.name.replace(/Sprint \d+ - /, ''),
+          start: card.due ? new Date(card.due) : null,
+          end: card.due ? new Date(card.due) : null,
+          hasDates: !!card.due,
+          card,
+          listName: list.name,
+          sprintStart,
+          sprintEnd,
+        });
+      });
+    }
+  });
+
+  // Generate month headers
+  const months = [];
+  let cursor = new Date(rangeStart);
+  while (cursor <= rangeEnd) {
+    const monthKey = cursor.getFullYear() + '-' + cursor.getMonth();
+    if (!months.length || months[months.length - 1].key !== monthKey) {
+      months.push({
+        key: monthKey,
+        label: cursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase(),
+        startDay: dayOffset(cursor),
+        days: 0,
+      });
+    }
+    months[months.length - 1].days++;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  // Generate day columns (weeks)
+  const weeks = [];
+  cursor = new Date(rangeStart);
+  let weekStart = new Date(cursor);
+  let weekDays = 0;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  while (cursor <= rangeEnd) {
+    weekDays++;
+    const nextDay = new Date(cursor);
+    nextDay.setDate(nextDay.getDate() + 1);
+    if (cursor.getDay() === 6 || nextDay > rangeEnd) {
+      const ws = new Date(weekStart);
+      weeks.push({
+        label: ws.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        startDay: dayOffset(ws),
+        days: weekDays,
+        isToday: now >= ws && now <= cursor,
+      });
+      weekStart = new Date(nextDay);
+      weekDays = 0;
+    }
+    cursor = nextDay;
+  }
+
+  const barsAreaWidth = totalDays * DAY_WIDTH;
+
+  // Build HTML
+  let html = '';
+
+  // Header: months row
+  html += '<div style="display:flex;">';
+  html += `<div class="gantt-sidebar-header" style="min-width:220px;max-width:220px;">Tarefa</div>`;
+  html += '<div style="display:flex;flex:1;position:relative;">';
+  // Month cells
+  html += '<div style="display:flex;position:absolute;top:0;left:0;right:0;height:38px;">';
+  months.forEach(m => {
+    html += `<div class="gantt-month-cell" style="width:${m.days * DAY_WIDTH}px;">${m.label}</div>`;
+  });
+  html += '</div>';
+  // Week cells
+  html += `<div style="display:flex;position:absolute;top:38px;left:0;right:0;height:38px;">`;
+  weeks.forEach(w => {
+    html += `<div class="gantt-week-cell ${w.isToday ? 'is-today' : ''}" style="width:${w.days * DAY_WIDTH}px;">${w.label}</div>`;
+  });
+  html += '</div>';
+  html += '</div></div>';
+
+  // Rows
+  html += `<div style="margin-top:${HEADER_HEIGHT}px;">`;
+  rows.forEach((row, ri) => {
+    const isSprint = row.type === 'sprint';
+    const isMarcoRow = row.type === 'marco';
+    const rowH = isSprint ? SPRINT_ROW_HEIGHT : ROW_HEIGHT;
+
+    const labelClass = isMarcoRow ? 'is-marco' : (isSprint ? 'is-sprint-header' : '');
+
+    html += `<div class="gantt-row-group" style="height:${rowH}px;">`;
+    // Sidebar
+    html += `<div class="gantt-row-sidebar" style="height:${rowH}px;">`;
+    html += `<div class="gantt-row-label ${labelClass}" title="${row.label}">${row.label}</div>`;
+    html += '</div>';
+
+    // Bars area
+    const barsClass = isSprint ? 'gantt-row-bars sprint-row' : 'gantt-row-bars';
+    html += `<div class="${barsClass}" style="width:${barsAreaWidth}px;height:${rowH}px;position:relative;">`;
+
+    if (row.hasDates && row.start && row.end) {
+      const startOff = dayOffset(row.start);
+      const endOff = dayOffset(row.end);
+      const barLeft = startOff * DAY_WIDTH;
+      const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 0.8);
+
+      let barClass = 'gantt-bar ';
+      if (isSprint) barClass += 'bar-sprint';
+      else if (isMarcoRow) barClass += 'bar-marco';
+      else barClass += 'bar-task';
+
+      const tooltipData = row.card ? `data-tt-name="${escAttr(row.card.name)}" data-tt-date="${row.card.due ? formatDate(row.card.due) : 'A definir'}" data-tt-desc="${escAttr(stripMarkdown(row.card.desc || ''))}" data-tt-tag="${escAttr(getCardLabel(row.card) || '')}" data-tt-list="${escAttr(row.listName)}"` : `data-tt-name="${escAttr(row.label)}" data-tt-date="${formatDate(row.start)} — ${formatDate(row.end)}" data-tt-desc="" data-tt-tag="" data-tt-list=""`;
+
+      html += `<div class="${barClass}" style="left:${barLeft}px;width:${barWidth}px;" ${tooltipData}></div>`;
+    } else if (!row.hasDates && !isSprint) {
+      // A definir bar — place it in estimated sprint area
+      const estStart = row.sprintStart || row.start;
+      const estEnd = row.sprintEnd || row.end;
+      if (estStart && estEnd) {
+        const startOff = dayOffset(estStart);
+        const endOff = dayOffset(estEnd);
+        const barLeft = startOff * DAY_WIDTH;
+        const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 2);
+        const tooltipData = row.card ? `data-tt-name="${escAttr(row.card.name)}" data-tt-date="A definir" data-tt-desc="${escAttr(stripMarkdown(row.card.desc || ''))}" data-tt-tag="A DEFINIR" data-tt-list="${escAttr(row.listName)}"` : '';
+        html += `<div class="gantt-bar bar-undefined" style="left:${barLeft}px;width:${barWidth}px;" ${tooltipData}></div>`;
+      }
+    } else if (!row.hasDates && isSprint) {
+      // Undefined sprint block
+      const startOff = dayOffset(row.start);
+      const endOff = dayOffset(row.end);
+      const barLeft = startOff * DAY_WIDTH;
+      const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 2);
+      html += `<div class="gantt-bar bar-sprint" style="left:${barLeft}px;width:${barWidth}px;border-style:dashed;opacity:0.5;" data-tt-name="${escAttr(row.label)}" data-tt-date="Datas a definir" data-tt-desc="" data-tt-tag="A DEFINIR" data-tt-list=""></div>`;
+    }
+
+    html += '</div>'; // bars
+    html += '</div>'; // row-group
+  });
+
+  // Today line
+  const todayOff = dayOffset(now);
+  if (todayOff >= 0 && todayOff <= totalDays) {
+    html += `<div class="gantt-today-line" style="left:${220 + todayOff * DAY_WIDTH}px;top:0;height:100%;position:absolute;"></div>`;
+  }
+
+  html += '</div>'; // rows wrapper
+
+  container.style.width = (barsAreaWidth + 220) + 'px';
+  container.style.position = 'relative';
+  container.innerHTML = html;
+
+  // Scroll to today
+  const ganttScroll = document.getElementById('gantt-scroll');
+  const todayScrollPos = Math.max(0, 220 + todayOff * DAY_WIDTH - ganttScroll.clientWidth / 2);
+  setTimeout(() => ganttScroll.scrollLeft = todayScrollPos, 300);
+
+  // Tooltip handlers
+  initGanttTooltips();
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function initGanttTooltips() {
+  const tooltip = document.getElementById('gantt-tooltip');
+  const ttTitle = document.getElementById('tt-title');
+  const ttDate = document.getElementById('tt-date');
+  const ttDesc = document.getElementById('tt-desc');
+  const ttTag = document.getElementById('tt-tag');
+
+  document.querySelectorAll('.gantt-bar[data-tt-name]').forEach(bar => {
+    bar.addEventListener('mouseenter', e => {
+      const name = bar.getAttribute('data-tt-name');
+      const date = bar.getAttribute('data-tt-date');
+      const desc = bar.getAttribute('data-tt-desc');
+      const tag = bar.getAttribute('data-tt-tag');
+
+      ttTitle.textContent = name;
+      ttDate.textContent = date;
+      ttDesc.textContent = desc || '';
+      ttDesc.style.display = desc ? 'block' : 'none';
+
+      if (tag) {
+        ttTag.textContent = tag;
+        ttTag.style.display = 'inline-block';
+        if (tag === 'marco') {
+          ttTag.style.background = 'var(--marco-bg)';
+          ttTag.style.color = 'var(--marco-color)';
+        } else if (tag === 'A DEFINIR' || tag === 'adefinir') {
+          ttTag.style.background = 'var(--adefinir-bg)';
+          ttTag.style.color = 'var(--adefinir-color)';
+        } else {
+          ttTag.style.background = 'var(--aguardando-bg)';
+          ttTag.style.color = 'var(--aguardando-color)';
+        }
+      } else {
+        ttTag.style.display = 'none';
+      }
+
+      tooltip.classList.add('visible');
+    });
+
+    bar.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+    });
+
+    bar.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+  });
 }
 
 function renderTaskItem(card) {
