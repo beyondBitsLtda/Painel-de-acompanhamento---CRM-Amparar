@@ -861,8 +861,8 @@ body::after {
   position: sticky; left: 0; z-index: 4;
   background: rgba(8, 8, 18, 0.98);
   border-right: 2px solid var(--border);
-  min-width: 220px;
-  max-width: 220px;
+  min-width: 200px;
+  max-width: 200px;
 }
 .gantt-sidebar-header {
   font-family: var(--font-mono);
@@ -872,7 +872,7 @@ body::after {
   color: var(--gray);
   padding: 14px 16px;
   border-bottom: 2px solid var(--border);
-  height: 76px;
+  height: 60px;
   display: flex; align-items: flex-end;
 }
 
@@ -884,9 +884,9 @@ body::after {
   position: sticky; left: 0; z-index: 3;
   background: rgba(8, 8, 18, 0.98);
   border-right: 2px solid var(--border);
-  min-width: 220px;
-  max-width: 220px;
-  padding: 0 12px;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 0 10px;
   display: flex; align-items: center;
   border-bottom: 1px solid var(--gray-dim);
   transition: background 0.2s ease;
@@ -900,13 +900,13 @@ body::after {
 
 .gantt-row-label {
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--black);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 196px;
+  max-width: 180px;
   line-height: 1.2;
 }
 .gantt-row-label.is-marco {
@@ -915,7 +915,7 @@ body::after {
 }
 .gantt-row-label.is-sprint-header {
   font-family: var(--font-hero);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   letter-spacing: 0.06em;
   color: var(--copper);
 }
@@ -926,23 +926,23 @@ body::after {
   display: flex;
   align-items: center;
   position: relative;
-  height: 36px;
+  height: 28px;
   border-bottom: 1px solid var(--gray-dim);
   transition: background 0.2s ease;
 }
 .gantt-row-bars.sprint-row {
-  height: 32px;
+  height: 26px;
   background: rgba(212, 148, 74, 0.02);
   border-bottom: 1px solid var(--border);
 }
 
 .gantt-bar {
   position: absolute;
-  height: 18px;
-  border-radius: 4px;
+  height: 14px;
+  border-radius: 3px;
   top: 50%;
   transform: translateY(-50%);
-  min-width: 6px;
+  min-width: 4px;
   transition: all 0.3s ease;
   cursor: default;
   z-index: 2;
@@ -959,14 +959,14 @@ body::after {
 .gantt-bar.bar-marco {
   background: linear-gradient(90deg, var(--marco-color), rgba(46, 204, 113, 0.7));
   box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
-  height: 20px;
-  border-radius: 4px;
+  height: 16px;
+  border-radius: 3px;
 }
 .gantt-bar.bar-sprint {
   background: linear-gradient(90deg, rgba(212, 148, 74, 0.25), rgba(212, 148, 74, 0.08));
   border: 1px solid rgba(212, 148, 74, 0.2);
-  height: 22px;
-  border-radius: 6px;
+  height: 18px;
+  border-radius: 4px;
 }
 .gantt-bar.bar-undefined {
   background: repeating-linear-gradient(
@@ -977,7 +977,7 @@ body::after {
     rgba(232, 232, 230, 0.08) 8px
   );
   border: 1px dashed rgba(232, 232, 230, 0.12);
-  height: 14px;
+  height: 10px;
 }
 
 /* Today line */
@@ -1102,8 +1102,8 @@ body::after {
 }
 
 @media (max-width: 900px) {
-  .gantt-row-sidebar, .gantt-sidebar { min-width: 160px; max-width: 160px; }
-  .gantt-row-label { max-width: 140px; font-size: 0.7rem; }
+  .gantt-row-sidebar, .gantt-sidebar { min-width: 140px; max-width: 140px; }
+  .gantt-row-label { max-width: 120px; font-size: 0.65rem; }
 }
 
 /* ═══ ANIMATIONS ═══ */
@@ -1257,7 +1257,7 @@ body::after {
 // ════════════════════════════════════════════
 // CONFIG — Altere a URL do JSON aqui
 // ════════════════════════════════════════════
-const JSON_URL = './1nxAPbw5 - crm-amparar-cliente.json';
+const JSON_URL = './1nxAPbw5_-_crm-amparar-cliente.json';
 // Para carregar direto do repositório, troque por:
 // const JSON_URL = 'https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/trello-board.json';
 
@@ -1275,16 +1275,20 @@ function formatDateShort(dateStr) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }
 function getCardLabel(card) {
+  // Detecta marco pelo nome OU pela label
+  if (isMarco(card)) return 'marco';
   if (!card.labels || !card.labels.length) return null;
   for (const l of card.labels) {
-    if (l.name === 'MARCO') return 'marco';
     if (l.name === 'AGUARDANDO') return 'aguardando';
     if (l.name === 'A DEFINIR') return 'adefinir';
   }
   return null;
 }
 function isMarco(card) {
-  return card.labels && card.labels.some(l => l.name === 'MARCO');
+  // Detecta marco pela label MARCO ou pelo nome começando com "Marco"
+  const byLabel = card.labels && card.labels.some(l => l.name === 'MARCO');
+  const byName = /^marco\s*\d/i.test((card.name || '').trim());
+  return byLabel || byName;
 }
 function stripMarkdown(str) {
   if (!str) return '';
@@ -1355,30 +1359,31 @@ function renderBoard(data) {
 
   // Stats
   const allCards = data.cards || [];
-  const totalTasks = allCards.filter(c => !isMarco(c) && c.name !== 'Doc RoadMap').length;
-  const marcos = allCards.filter(c => isMarco(c));
-  const withDates = allCards.filter(c => c.due);
-  const noDates = allCards.filter(c => !c.due && !isMarco(c) && c.name !== 'Doc RoadMap');
+  const projectCards = allCards.filter(c => c.name !== 'Doc RoadMap');
+  const marcos = projectCards.filter(c => isMarco(c));
+  const tarefas = projectCards.filter(c => !isMarco(c));
+  const withDates = projectCards.filter(c => c.due);
+  const noDates = projectCards.filter(c => !c.due);
   const sprintLists = listsOrder.filter(l => l.name.startsWith('Sprint'));
   const totalSprints = sprintLists.length;
 
   // Determine current date position for progress
   const now = new Date();
-  const datedCards = allCards.filter(c => c.due).sort((a, b) => new Date(a.due) - new Date(b.due));
+  const datedCards = projectCards.filter(c => c.due).sort((a, b) => new Date(a.due) - new Date(b.due));
   let completedCount = 0;
   if (datedCards.length > 0) {
     completedCount = datedCards.filter(c => new Date(c.due) < now).length;
   }
-  const progressPct = totalTasks > 0 ? Math.round((completedCount / allCards.filter(c => c.name !== 'Doc RoadMap').length) * 100) : 0;
+  const progressPct = projectCards.length > 0 ? Math.round((completedCount / projectCards.length) * 100) : 0;
 
   // Render stats
   const statsGrid = document.getElementById('stats-grid');
   const stats = [
     { value: totalSprints, label: 'Sprints', cls: 'copper' },
-    { value: totalTasks, label: 'Tarefas', cls: '' },
+    { value: projectCards.length, label: 'Total de itens', cls: '' },
+    { value: tarefas.length, label: 'Tarefas', cls: '' },
     { value: marcos.length, label: 'Marcos', cls: 'green' },
-    { value: withDates.length, label: 'Com data', cls: 'copper' },
-    { value: noDates.length, label: 'A definir', cls: '' },
+    { value: noDates.length > 0 ? noDates.length : '✓', label: noDates.length > 0 ? 'Sem data' : 'Todas com data', cls: noDates.length > 0 ? '' : 'green' },
   ];
   statsGrid.innerHTML = stats.map(s => `
     <div class="stat-card">
@@ -1460,7 +1465,7 @@ function renderBoard(data) {
 
   // Sprint cards
   const sprintsGrid = document.getElementById('sprints-grid');
-  document.getElementById('total-tasks').textContent = `${allCards.filter(c => c.name !== 'Doc RoadMap').length} itens total`;
+  document.getElementById('total-tasks').textContent = `${projectCards.length} itens total`;
 
   sprintLists.forEach((list, i) => {
     const cards = cardsByList[list.id] || [];
@@ -1527,10 +1532,11 @@ function renderGantt(sprintLists, cardsByList, listsMap, viewMode) {
   const container = document.getElementById('gantt-chart');
   container.innerHTML = '';
 
-  const DAY_WIDTH = 38;
-  const ROW_HEIGHT = 36;
-  const SPRINT_ROW_HEIGHT = 32;
-  const HEADER_HEIGHT = 76;
+  const DAY_WIDTH = 22;
+  const ROW_HEIGHT = 28;
+  const SPRINT_ROW_HEIGHT = 26;
+  const HEADER_HEIGHT = 60;
+  const SIDEBAR_W = 200;
 
   // Collect all dates to determine range
   const allDates = [];
@@ -1548,27 +1554,22 @@ function renderGantt(sprintLists, cardsByList, listsMap, viewMode) {
   const minDate = new Date(Math.min(...allDates));
   const maxDate = new Date(Math.max(...allDates));
 
-  // Expand range: 1 week before, 3 weeks after (room for "a definir")
+  // Tight range: 5 days before first, 5 days after last
   const rangeStart = new Date(minDate);
-  rangeStart.setDate(rangeStart.getDate() - 7);
-  rangeStart.setDate(rangeStart.getDate() - rangeStart.getDay()); // align to Sunday
+  rangeStart.setDate(rangeStart.getDate() - 5);
+  rangeStart.setDate(rangeStart.getDate() - rangeStart.getDay());
 
   const rangeEnd = new Date(maxDate);
-  rangeEnd.setDate(rangeEnd.getDate() + 21 + 7 * 8); // extra for "a definir" sprints
-  rangeEnd.setDate(rangeEnd.getDate() + (6 - rangeEnd.getDay())); // align to Saturday
+  rangeEnd.setDate(rangeEnd.getDate() + 5);
+  rangeEnd.setDate(rangeEnd.getDate() + (6 - rangeEnd.getDay()));
 
   const totalDays = Math.ceil((rangeEnd - rangeStart) / (1000 * 60 * 60 * 24)) + 1;
-  const chartWidth = totalDays * DAY_WIDTH + 220; // +sidebar
 
   function dayOffset(date) {
     return Math.floor((date - rangeStart) / (1000 * 60 * 60 * 24));
   }
 
-  // Build rows based on view
   const rows = [];
-  let nextUndefStart = new Date(maxDate);
-  nextUndefStart.setDate(nextUndefStart.getDate() + 7);
-
   sprintLists.forEach((list, si) => {
     const cards = cardsByList[list.id] || [];
     const sprintDates = cards.filter(c => c.due).map(c => new Date(c.due));
@@ -1579,202 +1580,130 @@ function renderGantt(sprintLists, cardsByList, listsMap, viewMode) {
       sprintStart = new Date(Math.min(...sprintDates));
       sprintEnd = new Date(Math.max(...sprintDates));
     } else {
-      // Place "a definir" sprints sequentially after last known date
-      sprintStart = new Date(nextUndefStart);
-      sprintEnd = new Date(nextUndefStart);
-      sprintEnd.setDate(sprintEnd.getDate() + 13); // 2 weeks
-      nextUndefStart = new Date(sprintEnd);
-      nextUndefStart.setDate(nextUndefStart.getDate() + 1);
+      sprintStart = null;
+      sprintEnd = null;
     }
 
     if (viewMode === 'sprints' || viewMode === 'tasks') {
-      rows.push({
-        type: 'sprint',
-        label: list.name,
-        start: sprintStart,
-        end: sprintEnd,
-        hasDates,
-        cards: cards,
-        listName: list.name,
-      });
+      rows.push({ type:'sprint', label:list.name, start:sprintStart, end:sprintEnd, hasDates, listName:list.name });
     }
 
     if (viewMode === 'tasks') {
       cards.forEach(card => {
         if (card.name === 'Doc RoadMap') return;
         const isMrc = isMarco(card);
-        rows.push({
-          type: isMrc ? 'marco' : 'task',
-          label: card.name,
-          start: card.due ? new Date(card.due) : null,
-          end: card.due ? new Date(card.due) : null,
-          hasDates: !!card.due,
-          card,
-          listName: list.name,
-          sprintStart,
-          sprintEnd,
-        });
+        rows.push({ type:isMrc?'marco':'task', label:card.name, start:card.due?new Date(card.due):null, end:card.due?new Date(card.due):null, hasDates:!!card.due, card, listName:list.name, sprintStart, sprintEnd });
       });
     }
 
     if (viewMode === 'marcos') {
       cards.filter(c => isMarco(c)).forEach(card => {
-        rows.push({
-          type: 'marco',
-          label: card.name + ' — ' + list.name.replace(/Sprint \d+ - /, ''),
-          start: card.due ? new Date(card.due) : null,
-          end: card.due ? new Date(card.due) : null,
-          hasDates: !!card.due,
-          card,
-          listName: list.name,
-          sprintStart,
-          sprintEnd,
-        });
+        rows.push({ type:'marco', label:card.name+' \u2014 '+list.name.replace(/Sprint \d+ - /,''), start:card.due?new Date(card.due):null, end:card.due?new Date(card.due):null, hasDates:!!card.due, card, listName:list.name, sprintStart, sprintEnd });
       });
     }
   });
 
-  // Generate month headers
+  // Month headers
   const months = [];
   let cursor = new Date(rangeStart);
   while (cursor <= rangeEnd) {
-    const monthKey = cursor.getFullYear() + '-' + cursor.getMonth();
-    if (!months.length || months[months.length - 1].key !== monthKey) {
-      months.push({
-        key: monthKey,
-        label: cursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase(),
-        startDay: dayOffset(cursor),
-        days: 0,
-      });
+    const monthKey = cursor.getFullYear()+'-'+cursor.getMonth();
+    if (!months.length || months[months.length-1].key !== monthKey) {
+      months.push({ key:monthKey, label:cursor.toLocaleDateString('pt-BR',{month:'short',year:'numeric'}).toUpperCase(), days:0 });
     }
-    months[months.length - 1].days++;
-    cursor.setDate(cursor.getDate() + 1);
+    months[months.length-1].days++;
+    cursor.setDate(cursor.getDate()+1);
   }
 
-  // Generate day columns (weeks)
+  // Week columns
   const weeks = [];
   cursor = new Date(rangeStart);
   let weekStart = new Date(cursor);
   let weekDays = 0;
-  const now = new Date();
-  now.setHours(0,0,0,0);
+  const now = new Date(); now.setHours(0,0,0,0);
   while (cursor <= rangeEnd) {
     weekDays++;
-    const nextDay = new Date(cursor);
-    nextDay.setDate(nextDay.getDate() + 1);
-    if (cursor.getDay() === 6 || nextDay > rangeEnd) {
+    const nextDay = new Date(cursor); nextDay.setDate(nextDay.getDate()+1);
+    if (cursor.getDay()===6 || nextDay>rangeEnd) {
       const ws = new Date(weekStart);
-      weeks.push({
-        label: ws.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-        startDay: dayOffset(ws),
-        days: weekDays,
-        isToday: now >= ws && now <= cursor,
-      });
-      weekStart = new Date(nextDay);
-      weekDays = 0;
+      weeks.push({ label:ws.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), days:weekDays, isToday:now>=ws&&now<=cursor });
+      weekStart = new Date(nextDay); weekDays = 0;
     }
     cursor = nextDay;
   }
 
   const barsAreaWidth = totalDays * DAY_WIDTH;
-
-  // Build HTML
   let html = '';
 
-  // Header: months row
+  // Header
   html += '<div style="display:flex;">';
-  html += `<div class="gantt-sidebar-header" style="min-width:220px;max-width:220px;">Tarefa</div>`;
-  html += '<div style="display:flex;flex:1;position:relative;">';
-  // Month cells
-  html += '<div style="display:flex;position:absolute;top:0;left:0;right:0;height:38px;">';
-  months.forEach(m => {
-    html += `<div class="gantt-month-cell" style="width:${m.days * DAY_WIDTH}px;">${m.label}</div>`;
-  });
-  html += '</div>';
-  // Week cells
-  html += `<div style="display:flex;position:absolute;top:38px;left:0;right:0;height:38px;">`;
-  weeks.forEach(w => {
-    html += `<div class="gantt-week-cell ${w.isToday ? 'is-today' : ''}" style="width:${w.days * DAY_WIDTH}px;">${w.label}</div>`;
-  });
-  html += '</div>';
-  html += '</div></div>';
+  html += '<div class="gantt-sidebar-header" style="min-width:'+SIDEBAR_W+'px;max-width:'+SIDEBAR_W+'px;height:'+HEADER_HEIGHT+'px;">Tarefa</div>';
+  html += '<div style="display:flex;flex-direction:column;width:'+barsAreaWidth+'px;">';
+  html += '<div style="display:flex;">';
+  months.forEach(m => { html += '<div class="gantt-month-cell" style="width:'+(m.days*DAY_WIDTH)+'px;">'+m.label+'</div>'; });
+  html += '</div><div style="display:flex;">';
+  weeks.forEach(w => { html += '<div class="gantt-week-cell '+(w.isToday?'is-today':'')+'" style="width:'+(w.days*DAY_WIDTH)+'px;">'+w.label+'</div>'; });
+  html += '</div></div></div>';
 
   // Rows
-  html += `<div style="margin-top:${HEADER_HEIGHT}px;">`;
-  rows.forEach((row, ri) => {
-    const isSprint = row.type === 'sprint';
-    const isMarcoRow = row.type === 'marco';
+  html += '<div style="position:relative;">';
+  rows.forEach(row => {
+    const isSprint = row.type==='sprint';
+    const isMarcoRow = row.type==='marco';
     const rowH = isSprint ? SPRINT_ROW_HEIGHT : ROW_HEIGHT;
+    const labelClass = isMarcoRow?'is-marco':(isSprint?'is-sprint-header':'');
 
-    const labelClass = isMarcoRow ? 'is-marco' : (isSprint ? 'is-sprint-header' : '');
-
-    html += `<div class="gantt-row-group" style="height:${rowH}px;">`;
-    // Sidebar
-    html += `<div class="gantt-row-sidebar" style="height:${rowH}px;">`;
-    html += `<div class="gantt-row-label ${labelClass}" title="${row.label}">${row.label}</div>`;
+    html += '<div class="gantt-row-group" style="height:'+rowH+'px;">';
+    html += '<div class="gantt-row-sidebar" style="height:'+rowH+'px;min-width:'+SIDEBAR_W+'px;max-width:'+SIDEBAR_W+'px;">';
+    html += '<div class="gantt-row-label '+labelClass+'" title="'+escAttr(row.label)+'">'+row.label+'</div>';
     html += '</div>';
 
-    // Bars area
-    const barsClass = isSprint ? 'gantt-row-bars sprint-row' : 'gantt-row-bars';
-    html += `<div class="${barsClass}" style="width:${barsAreaWidth}px;height:${rowH}px;position:relative;">`;
+    const barsClass = isSprint?'gantt-row-bars sprint-row':'gantt-row-bars';
+    html += '<div class="'+barsClass+'" style="width:'+barsAreaWidth+'px;height:'+rowH+'px;position:relative;">';
 
     if (row.hasDates && row.start && row.end) {
       const startOff = dayOffset(row.start);
       const endOff = dayOffset(row.end);
       const barLeft = startOff * DAY_WIDTH;
-      const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 0.8);
-
+      const barWidth = Math.max((endOff-startOff+1)*DAY_WIDTH, DAY_WIDTH*0.6);
       let barClass = 'gantt-bar ';
       if (isSprint) barClass += 'bar-sprint';
       else if (isMarcoRow) barClass += 'bar-marco';
       else barClass += 'bar-task';
-
-      const tooltipData = row.card ? `data-tt-name="${escAttr(row.card.name)}" data-tt-date="${row.card.due ? formatDate(row.card.due) : 'A definir'}" data-tt-desc="${escAttr(stripMarkdown(row.card.desc || ''))}" data-tt-tag="${escAttr(getCardLabel(row.card) || '')}" data-tt-list="${escAttr(row.listName)}"` : `data-tt-name="${escAttr(row.label)}" data-tt-date="${formatDate(row.start)} — ${formatDate(row.end)}" data-tt-desc="" data-tt-tag="" data-tt-list=""`;
-
-      html += `<div class="${barClass}" style="left:${barLeft}px;width:${barWidth}px;" ${tooltipData}></div>`;
-    } else if (!row.hasDates && !isSprint) {
-      // A definir bar — place it in estimated sprint area
-      const estStart = row.sprintStart || row.start;
-      const estEnd = row.sprintEnd || row.end;
-      if (estStart && estEnd) {
-        const startOff = dayOffset(estStart);
-        const endOff = dayOffset(estEnd);
-        const barLeft = startOff * DAY_WIDTH;
-        const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 2);
-        const tooltipData = row.card ? `data-tt-name="${escAttr(row.card.name)}" data-tt-date="A definir" data-tt-desc="${escAttr(stripMarkdown(row.card.desc || ''))}" data-tt-tag="A DEFINIR" data-tt-list="${escAttr(row.listName)}"` : '';
-        html += `<div class="gantt-bar bar-undefined" style="left:${barLeft}px;width:${barWidth}px;" ${tooltipData}></div>`;
-      }
+      const ttData = row.card
+        ? 'data-tt-name="'+escAttr(row.card.name)+'" data-tt-date="'+(row.card.due?formatDate(row.card.due):'A definir')+'" data-tt-desc="'+escAttr(stripMarkdown(row.card.desc||''))+'" data-tt-tag="'+escAttr(getCardLabel(row.card)||'')+'" data-tt-list="'+escAttr(row.listName)+'"'
+        : 'data-tt-name="'+escAttr(row.label)+'" data-tt-date="'+formatDate(row.start)+' \u2014 '+formatDate(row.end)+'" data-tt-desc="" data-tt-tag="" data-tt-list=""';
+      html += '<div class="'+barClass+'" style="left:'+barLeft+'px;width:'+barWidth+'px;" '+ttData+'></div>';
     } else if (!row.hasDates && isSprint) {
-      // Undefined sprint block
-      const startOff = dayOffset(row.start);
-      const endOff = dayOffset(row.end);
+      // Sprint sem data — placeholder no final
+      html += '<div class="gantt-bar bar-undefined" style="left:'+(barsAreaWidth-DAY_WIDTH*6)+'px;width:'+(DAY_WIDTH*5)+'px;" data-tt-name="'+escAttr(row.label)+'" data-tt-date="Datas a definir" data-tt-desc="" data-tt-tag="A DEFINIR" data-tt-list=""></div>';
+    } else if (!row.hasDates && row.sprintStart && row.sprintEnd) {
+      const startOff = dayOffset(row.sprintStart);
+      const endOff = dayOffset(row.sprintEnd);
       const barLeft = startOff * DAY_WIDTH;
-      const barWidth = Math.max((endOff - startOff + 1) * DAY_WIDTH, DAY_WIDTH * 2);
-      html += `<div class="gantt-bar bar-sprint" style="left:${barLeft}px;width:${barWidth}px;border-style:dashed;opacity:0.5;" data-tt-name="${escAttr(row.label)}" data-tt-date="Datas a definir" data-tt-desc="" data-tt-tag="A DEFINIR" data-tt-list=""></div>`;
+      const barWidth = Math.max((endOff-startOff+1)*DAY_WIDTH, DAY_WIDTH*2);
+      const ttData = row.card ? 'data-tt-name="'+escAttr(row.card.name)+'" data-tt-date="A definir" data-tt-desc="'+escAttr(stripMarkdown(row.card.desc||''))+'" data-tt-tag="A DEFINIR" data-tt-list="'+escAttr(row.listName)+'"' : '';
+      html += '<div class="gantt-bar bar-undefined" style="left:'+barLeft+'px;width:'+barWidth+'px;" '+ttData+'></div>';
     }
 
-    html += '</div>'; // bars
-    html += '</div>'; // row-group
+    html += '</div></div>';
   });
 
   // Today line
   const todayOff = dayOffset(now);
   if (todayOff >= 0 && todayOff <= totalDays) {
-    html += `<div class="gantt-today-line" style="left:${220 + todayOff * DAY_WIDTH}px;top:0;height:100%;position:absolute;"></div>`;
+    html += '<div class="gantt-today-line" style="left:'+(SIDEBAR_W+todayOff*DAY_WIDTH)+'px;top:0;height:100%;position:absolute;"></div>';
   }
+  html += '</div>';
 
-  html += '</div>'; // rows wrapper
-
-  container.style.width = (barsAreaWidth + 220) + 'px';
+  container.style.width = (barsAreaWidth + SIDEBAR_W) + 'px';
   container.style.position = 'relative';
   container.innerHTML = html;
 
-  // Scroll to today
   const ganttScroll = document.getElementById('gantt-scroll');
-  const todayScrollPos = Math.max(0, 220 + todayOff * DAY_WIDTH - ganttScroll.clientWidth / 2);
+  const todayScrollPos = Math.max(0, SIDEBAR_W + todayOff * DAY_WIDTH - ganttScroll.clientWidth / 2);
   setTimeout(() => ganttScroll.scrollLeft = todayScrollPos, 300);
 
-  // Tooltip handlers
   initGanttTooltips();
 }
 
